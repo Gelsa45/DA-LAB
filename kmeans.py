@@ -9,7 +9,12 @@ def k_means_clustering(data, k, max_iterations=100):
     centroids = data[:k]
 
     for iteration in range(max_iterations):
-        labels = [min(range(k), key=lambda i: euclidean_distance(point, centroids[i])) for point in data]
+        #labels = [min(range(k), key=lambda i: euclidean_distance(point, centroids[i])) for point in data]
+        labels = []
+        for point in data:
+          closest_centroid_index = min(range(k), key=lambda i: euclidean_distance(point, centroids[i]))
+          labels.append(closest_centroid_index)
+
 
         new_centroids = []
         for i in range(k):
