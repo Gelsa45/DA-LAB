@@ -1,7 +1,6 @@
 import csv
 import math
 
-
 # Load data from a CSV file into a list of dictionaries
 def load_data(filename):
     data = []
@@ -106,19 +105,15 @@ def get_user_input():
 
 
 # Main function to execute the program
-def main():
     # Load the data and build the tree
-    data = load_data('dectree.csv')
-    attributes = ['age', 'income', 'student', 'credit_rating']
-    tree = build_tree(data, attributes)
+data = load_data('dectree.csv')
+#print(data)
+attributes = ['age', 'income', 'student', 'credit_rating']
+tree = build_tree(data, attributes)
 
+#print(tree)
     # Display the tree and get user input for prediction
-    display_tree(tree)
-    instance = get_user_input()
-    prediction = predict(tree, instance)
-
-    print(f"Prediction for class_buys_computer: {prediction}")
-
-
-if __name__ == "__main__":
-    main()
+display_tree(tree)
+instance = get_user_input()
+prediction = predict(tree, instance)
+print(f"Prediction for class_buys_computer: {prediction}")
