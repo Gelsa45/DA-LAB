@@ -76,12 +76,12 @@ def association_rule(frequent_itemsets, transactions, min_confidence):
 # Set minimum support and confidence
 min_support = 2 / len(transactions)
 frequent_itemsets = apriori(transactions, min_support)
-
+print(frequent_itemsets)
 # Set minimum confidence
 min_confidence = 0.75
 rules = association_rule(frequent_itemsets, transactions, min_confidence)
-
+print(rules)
 # Print association rules
 print("\nAssociation Rules:")
 for a, c in rules:
-    print(f"{' '.join(a)} => {' '.join(c)}")
+    print(f"{" ".join(a)} => {" ".join(c)}")
