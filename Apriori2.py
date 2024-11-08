@@ -1,105 +1,81 @@
-from itertools import chain, combinations
+import csv
+from itertools import combinations
 
-# Load data from a CSV file into a list of transactions
-def load_data(file_path):
-    transactions = []
-    with open(file_path, 'r') as file:
-        next(file)  # Skip header
-        for line in file:
-            _, items = line.strip().split(',', 1)
-            transaction = set(items.replace('"', '').split())  # Split items in each transaction
-            transactions.append(transaction)
-    return transactions
+# Load data from CSV file
+file_path = "apriori.csv"
+transactions = []
+with open(file_path, 'r') as file:
+    reader = csv.reader(file)
+    transactions = [list(row) for row in reader]
 
-# Get unique items as 1-itemsets (initial candidate itemsets)
-def get_unique_items(transactions):
-    unique_items = set()
-    for transaction in transactions:
-        for item in transaction:
-            unique_items.add(frozenset([item]))  # Store each item as a frozenset (1-itemset)
-    return unique_items
-
-# Calculate the support count of an itemset in all transactions
-def calculate_support(transactions, itemset):
-    return sum(1 for transaction in transactions if itemset.issubset(transaction))
-
-# Generate candidate itemsets of size k from frequent itemsets of size k-1
-def generate_candidates(previous_itemsets, k):
-    candidates = set()
-    previous_itemsets_list = list(previous_itemsets)
-    for i in range(len(previous_itemsets_list)):
-        for j in range(i + 1, len(previous_itemsets_list)):
-            union_itemset = previous_itemsets_list[i] | previous_itemsets_list[j]
-            if len(union_itemset) == k:  # Only keep itemsets of the correct size
-                candidates.add(union_itemset)
-    return candidates
-
-# Apriori algorithm to find all frequent itemsets
-def apriori(transactions, min_support):
-    unique_items = get_unique_items(transactions)
-    frequent_itemsets = {}
-    k = 1  # Start with 1-itemsets
-
-    while True:
-        # Generate candidate itemsets
-        if k == 1:
-            candidate_itemsets = unique_items
-        else:
-            candidate_itemsets = generate_candidates(frequent_itemsets_k.keys(), k)
-        
-        # Calculate support for each candidate itemset and filter by min_support
-        frequent_itemsets_k = {}
-        for itemset in candidate_itemsets:
-            support = calculate_support(transactions, itemset)
-            if support >= min_support:
-                frequent_itemsets_k[itemset] = support
-        
-        # Stop if no frequent itemsets were found
-        if not frequent_itemsets_k:
-            break
-        
-        # Add frequent itemsets of this size to the main list and proceed to the next size
-        frequent_itemsets.update(frequent_itemsets_k)
-        k += 1
-
-    return frequent_itemsets
-
-# Generate all possible non-empty subsets of an itemset
-def powerset(itemset):
-    return chain.from_iterable(combinations(itemset, r) for r in range(1, len(itemset)))
-
-# Generate association rules from frequent itemsets
-def generate_rules(transactions, itemset, itemset_support, min_confidence):
-    rules = []
-    for antecedent in map(set, powerset(itemset)):
-        if antecedent and antecedent != itemset:  # Exclude empty and full itemsets
-            consequent = itemset - antecedent
-            antecedent_support = calculate_support(transactions, antecedent)
-            if antecedent_support > 0:
-                confidence = itemset_support / antecedent_support
-                if confidence >= min_confidence:
-                    rules.append((antecedent, consequent, confidence))
-    return rules
-
-# Parameters
+# Set minimum support and confidence
 min_support = 2
 min_confidence = 0.75
 
-# Load transactions
-transactions = load_data("cono.csv")
+# Step 1: Generate Frequent 1-itemsets
+c1 = {}
+for transaction in transactions:
+    for item in transaction:
+        if item in c1:
+            c1[item] += 1
+        else:
+            c1[item] = 1
 
-# Find frequent itemsets
-frequent_itemsets = apriori(transactions, min_support)
+# Filter C1 to get L1 (Frequent 1-itemsets)
+l1 = {key: value for key, value in c1.items() if value >= min_support}
 
-# Print frequent itemsets and their support counts
-print("Frequent Itemsets :Counts:")
-for itemset, support in frequent_itemsets.items():
-    print(f"{set(itemset)}: {support}")
+# Print Frequent 1-itemsets
+print("Frequent 1-itemsets:")
+for item, support in l1.items():
+    print(f"{item}: {support}")
 
-# Generate and print association rules
+# Initialize variables for frequent itemset generation
+l = [l1]
+k = 2
+frequent_itemsets = []
+
+# Add L1 items to frequent itemsets list
+frequent_itemsets.extend(l1.keys())
+
+# Step 2: Generate frequent itemsets for k >= 2
+while len(l[k - 2]) > 0:
+    ck = {}
+    for transaction in transactions:
+        # Generate combinations of items in the transaction of size k
+        combos = combinations(transaction, k)
+        for combo in combos:
+            if combo in ck:
+                ck[combo] += 1
+            else:
+                ck[combo] = 1
+
+    # Filter candidate itemsets based on min_support
+    lk = {key: value for key, value in ck.items() if value >= min_support}
+    l.append(lk)
+    
+    # Print frequent k-itemsets
+    print(f"Frequent {k}-itemsets:")
+    for itemset, support in lk.items():
+        print(f"{itemset}: {support}")
+
+    # Add Lk items to frequent itemsets list
+    frequent_itemsets.extend(lk.keys())
+    
+    k += 1
+#print(frequent_itemsets)
+
+# Step 3: Generate Association Rules
 print("\nAssociation Rules:")
-for itemset, support in frequent_itemsets.items():
-    rules = generate_rules(transactions, itemset, support, min_confidence)
-    for antecedent, consequent, confidence in rules:
-        print(f"{set(antecedent)} => {set(consequent)} (Confidence: {confidence:.2f})")
-          
+for itemset in frequent_itemsets:
+    if isinstance(itemset, tuple):  # Only consider itemsets with more than one item
+        for i in range(1, len(itemset)):
+            for antecedent in combinations(itemset, i):
+                consequent = tuple(item for item in itemset if item not in antecedent)
+                antecedent_support = sum(1 for transaction in transactions if set(antecedent).issubset(transaction))
+                both_support = sum(1 for transaction in transactions if set(itemset).issubset(transaction))
+                
+                if antecedent_support > 0:
+                    confidence = both_support / antecedent_support
+                    if confidence >= min_confidence:
+                        print(f"{' '.join(antecedent)} => {' '.join(consequent)} (Confidence: {confidence:.2f})")
+
