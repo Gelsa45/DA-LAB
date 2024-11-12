@@ -63,41 +63,44 @@ def k_means_clustering(data, k, max_iterations=100):
             break
 
         centroids = new_centroids
-
+    print(distances)
     return labels, centroids
 
 # Function to plot the clusters
 def plot_clusters(data, labels, centroids):
-    plt.figure(figsize=(8, 6))
+    #plt.figure(figsize=(8, 6))
 
     for i in range(max(labels) + 1):
         cluster_points = [data[j] for j in range(len(data)) if labels[j] == i]
-        cluster_points = list(zip(*cluster_points))  # Transpose for plotting
+        cluster_points = list(zip(*cluster_points[:2]))  # Transpose for plotting
         plt.scatter(cluster_points[0], cluster_points[1], label=f'Cluster {i + 1}')
 
-    centroids_x, centroids_y = zip(*centroids)
+    #centroids_x, centroids_y = zip(*[centroid[:2] for centroid in centroids] )
+    centroids_x, centroids_y = zip(*[centroid[:2] for centroid in centroids])
     plt.scatter(centroids_x, centroids_y, color='black', marker='.', s=100, label='Centroids')
-
+    #plt.scatter(centroids_x, centroids_y)
     plt.title('KMEANS CLUSTERING')
     plt.xlabel('A')
     plt.ylabel('B')
-    plt.legend()
-    plt.grid()
+    #plt.legend()
+   # plt.grid()
     plt.show()
 
 # Load data from CSV file
-csv_file = "kmeans.csv"  
+csv_file = "kmean.csv"  
 df = pd.read_csv(csv_file)
-
+print(df)
 # Convert data to a list of points
+#data = df[['avg_transaction_rate','time_of_transaction','amount_spent','frequency_of_purchase']].values.tolist()
 data = df.values.tolist()
-
+print(data)
 # Get the number of clusters from user input
 k = int(input("Enter the number of clusters (k): "))
 
 # Perform k-means clustering
 labels, centroids = k_means_clustering(data, k)
-
+print(labels)
+print(centroids)
 # Display the final clusters
 print("\nFinal clusters:")
 for i in range(k):
@@ -110,3 +113,4 @@ print(centroids)
 
 # Plot the clusters
 plot_clusters(data, labels, centroids)
+
